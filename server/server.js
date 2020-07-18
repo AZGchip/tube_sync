@@ -40,7 +40,7 @@ const typesDef = {
 //all active connections are stored in this object
 const clients = {};
 const users = {};
-let ready = 0;
+
 let connected = 0;
 // This code generates unique userid for everyuser.
 const getUniqueID = () => {
@@ -62,27 +62,32 @@ wss.on('request', function (request) {
             console.log("message:", message)
             const recievedData = JSON.parse(message.utf8Data);
             console.log(recievedData)
-            if (recievedData.action === "load_video") {
+            if (recievedData.action === "load_and_sync") {
                 console.log("receved: ", recievedData)
-                ready = 0;
+
                 for (key in clients) {
                     clients[key].sendUTF(message.utf8Data);
                 }
             }
             else if (recievedData.action === "sync_start") {
                 console.log("Preparing Sync")
-                ready++
-                connected = 0;
+
+
                 for (key in clients) {
-                connected++
+
                 }
-                console.log(ready, connected)
-                
-                if ( connected === 3) {
-                   
-                    for (key in clients) {
-                        clients[key].sendUTF(message.utf8Data);
-                    }
+
+
+
+
+                for (key in clients) {
+                    clients[key].sendUTF(message.utf8Data);
+                }
+
+            }
+            else if (recievedData.action === "play") {
+                for (key in clients) {
+                    clients[key].sendUTF(message.utf8Data);
                 }
             }
 

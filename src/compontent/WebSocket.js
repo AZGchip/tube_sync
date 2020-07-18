@@ -22,16 +22,30 @@ class WebSocket extends Component {
       isPlaying: false,
       videoId: "1Zrq8FiKS6A",
       player: "",
+      videoUrl:"",
     };
-
+    this.handleInput = this.handleInput.bind(this)
   }
-  sendVideoSrc = (id) => {
+
+  sendVideoSrc = () => {
+    const videoId = this.state.videoUrl.match(/(?<=v=)[a-z0-9-]*/i)
     client.send(JSON.stringify({
       type: "message",
-      action: "load_video",
-      data: id
+      action: "load_and_sync",
+      data: videoId
     }));
-    console.log("attempting to send", id)
+    
+    console.log("attempting to send", videoId)
+    
+  }
+  playVideo = () => {
+    
+    client.send(JSON.stringify({
+      type: "message",
+      action: "play",
+      data: true
+    }));
+    console.log("attempting to play")
   }
   componentWillMount() {
     client.onopen = () => {
@@ -41,33 +55,39 @@ class WebSocket extends Component {
       const serverData = JSON.parse(message.data);
 
       switch (serverData.action) {
-        case "load_video":
+        case "load_and_sync":
           console.log("sending load request")
           this.setState({ videoId: serverData.data })
+          
           break;
         case "sync_start":
-          console.log("starting")
-          player.playVideo()
+          console.log("syncing")
+          
           break;
+        case "play":
+          player.playVideo()
+
       }
 
-      
       console.log("reply received: ", serverData)
     }
 
   };
   _onStateChange(event) {
     console.log(event)
+    if (event.data === 5){
+    player.seekTo({ seconds: 1, allowSeekAhead: true })
+    player.pauseVideo()
+  }
   }
   _onReady(event) {
     player = event.target;
-    client.send(JSON.stringify({
-      type: "message",
-      action: "sync_start",
-      data: "ready"
-    }))
-    player.seekTo({ seconds: 0, allowSeekAhead: true })
-    player.pauseVideo()
+    
+    
+
+  }
+  handleInput(event) {
+    this.setState({videoUrl: event.target.value})
   }
   render() {
     return (
@@ -79,9 +99,17 @@ class WebSocket extends Component {
           onStateChange={this._onStateChange}
           onReady={this._onReady}
         />
-        <button onClick={() => this.sendVideoSrc("JXtujxT9rzA")}>submit video URL</button>
+
+
+
+        <input  onChange={this.handleInput} />
+        <button onClick={() => this.sendVideoSrc()}>load Youtube URL</button>
+
+
+        <button onClick={() => this.playVideo()}>play video </button>
       </div>
     );
   }
+  
 }
 export default WebSocket;
