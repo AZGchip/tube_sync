@@ -40,7 +40,8 @@ const typesDef = {
 //all active connections are stored in this object
 const clients = {};
 const users = {};
-
+let ready = 0;
+let connected = 0;
 // This code generates unique userid for everyuser.
 const getUniqueID = () => {
     const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
@@ -58,20 +59,46 @@ wss.on('request', function (request) {
 
     connection.on('message', function (message) {
         if (message.type === "utf8") {
-            console.log("receved: ", message.utf8Data)
-            for (key in clients) {
-                clients[key].sendUTF(message.utf8Data);
+            console.log("message:", message)
+            const recievedData = JSON.parse(message.utf8Data);
+            console.log(recievedData)
+            if (recievedData.action === "load_video") {
+                console.log("receved: ", recievedData)
+                ready = 0;
+                for (key in clients) {
+                    clients[key].sendUTF(message.utf8Data);
+                }
             }
+            else if (recievedData.action === "sync_start") {
+                console.log("Preparing Sync")
+                ready++
+                connected = 0;
+                for (key in clients) {
+                connected++
+                }
+                console.log(ready, connected)
+                
+                if ( connected === 3) {
+                   
+                    for (key in clients) {
+                        clients[key].sendUTF(message.utf8Data);
+                    }
+                }
+            }
+
+
         }
 
     });
+
     connection.on('close', function (connection) {
-        console.log((new Date()) + " Peer " + userID + " disconnected.");
+        connected--
+        console.log((new Date()) + " User " + userID + " disconnected.");
         const json = { type: typesDef.USER_EVENT };
 
         json.data = { users, userActivity };
         delete clients[userID];
         delete users[userID];
-
+        console.log("remaining clients: ", clients)
     });
 });
