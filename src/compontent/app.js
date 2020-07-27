@@ -1,9 +1,10 @@
 import React from 'react';
-
-import WebSocket from "./WebSocket"
+import NavBar from "./Navbar"
+import SyncView from "../pages/SyncView"
 function app(){
     return <div>
-        <WebSocket/>
+        <NavBar/>
+        <SyncView/>
     </div>
 }
 export default app
